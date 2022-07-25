@@ -1,5 +1,6 @@
 Version 0.8.16 (2022-XX-XX)
 ========================
+* Hyundai Tucson Hybrid 2022 support thanks to sunnyhaibin!
 
 Version 0.8.15 (2022-07-20)
 ========================

@@ -21,7 +21,7 @@ class CarControllerParams:
     self.STEER_DRIVER_FACTOR = 1
     self.STEER_THRESHOLD = 150
 
-    if CP.carFingerprint in HDA2_CAR:
+    if CP.carFingerprint in HDA2_CAR or CAN_FD_CAR:
       self.STEER_MAX = 270
       self.STEER_DRIVER_ALLOWANCE = 250
       self.STEER_DRIVER_MULTIPLIER = 2
@@ -65,6 +65,7 @@ class CAR:
   PALISADE = "HYUNDAI PALISADE 2020"
   VELOSTER = "HYUNDAI VELOSTER 2019"
   SONATA_HYBRID = "HYUNDAI SONATA HYBRID 2021"
+  TUCSON_HEV_2022 = "HYUNDAI TUCSON HYBRID 2022"
 
   # Kia
   KIA_FORTE = "KIA FORTE E 2018 & GT 2021"
@@ -131,6 +132,7 @@ CAR_INFO: Dict[str, Optional[Union[HyundaiCarInfo, List[HyundaiCarInfo]]]] = {
   ],
   CAR.VELOSTER: HyundaiCarInfo("Hyundai Veloster 2019-20", min_enable_speed=5. * CV.MPH_TO_MS, harness=Harness.hyundai_e),
   CAR.SONATA_HYBRID: HyundaiCarInfo("Hyundai Sonata Hybrid 2020-22", "All", harness=Harness.hyundai_a),
+  CAR.TUCSON_HEV_2022: HyundaiCarInfo("Hyundai Tucson Hybrid 2022", "All", harness=Harness.hyundai_n),
 
   # Kia
   CAR.KIA_FORTE: [
@@ -1239,6 +1241,21 @@ FW_VERSIONS = {
       b'\xf1\x00CV1 MFC  AT USA LHD 1.00 1.05 99210-CV000 211027',
     ],
   },
+  CAR.TUCSON_HEV_2022: {
+    (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00NX4 FR_CMR AT USA LHD 1.00 1.00 99211-N9240 14Q',
+    ],
+    (Ecu.eps, 0x7d4, None): [
+      b'\xf1\x00NX4 MDPS C 1.00 1.01 56300-P0100 2228',
+    ],
+    (Ecu.engine, 0x7e0, None): [
+      b'\xf1\x87391312MND0',
+    ],
+    (Ecu.transmission, 0x7e1, None): [
+      b'\xf1\x00PSBG2441  G19_Rev\x00\x00\x00SNX4T16XXHS01NS2lS\xdfa',
+      b'\xf1\x8795441-3D220\x00\xf1\x81G19_Rev\x00\x00\x00\xf1\x00PSBG2441  G19_Rev\x00\x00\x00SNX4T16XXHS01NS2lS\xdfa',
+    ],
+  },
 }
 
 CHECKSUM = {
@@ -1256,6 +1273,7 @@ FEATURES = {
   "use_fca": {CAR.SONATA, CAR.SONATA_HYBRID, CAR.ELANTRA, CAR.ELANTRA_2021, CAR.ELANTRA_HEV_2021, CAR.ELANTRA_GT_I30, CAR.KIA_STINGER, CAR.IONIQ_EV_2020, CAR.IONIQ_PHEV, CAR.KONA_EV, CAR.KIA_FORTE, CAR.KIA_NIRO_EV, CAR.PALISADE, CAR.GENESIS_G70, CAR.GENESIS_G70_2020, CAR.KONA, CAR.SANTA_FE, CAR.KIA_SELTOS, CAR.KONA_HEV, CAR.SANTA_FE_2022, CAR.KIA_K5_2021, CAR.IONIQ_HEV_2022, CAR.SANTA_FE_HEV_2022, CAR.SANTA_FE_PHEV_2022, CAR.TUCSON},
 }
 
+CAN_FD_CAR = {CAR.TUCSON_HEV_2022, }
 HDA2_CAR = {CAR.KIA_EV6, }
 
 HYBRID_CAR = {CAR.IONIQ_PHEV, CAR.ELANTRA_HEV_2021, CAR.KIA_NIRO_HEV, CAR.KIA_NIRO_HEV_2021, CAR.SONATA_HYBRID, CAR.KONA_HEV, CAR.IONIQ, CAR.IONIQ_HEV_2022, CAR.SANTA_FE_HEV_2022, CAR.SANTA_FE_PHEV_2022, CAR.IONIQ_PHEV_2019}  # these cars use a different gas signal
@@ -1307,4 +1325,5 @@ DBC = {
   CAR.KIA_CEED: dbc_dict('hyundai_kia_generic', None),
   CAR.KIA_EV6: dbc_dict('kia_ev6', None),
   CAR.SONATA_HYBRID: dbc_dict('hyundai_kia_generic', 'hyundai_kia_mando_front_radar'),
+  CAR.TUCSON_HEV_2022: dbc_dict('hyundai_tucson_hev_2022', None),
 }

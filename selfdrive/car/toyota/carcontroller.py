@@ -7,6 +7,7 @@ from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_comma
 from selfdrive.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         MIN_ACC_SPEED, PEDAL_TRANSITION, CarControllerParams
 from opendbc.can.packer import CANPacker
+from common.realtime import DT_CTRL
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -46,7 +47,23 @@ class CarController:
       interceptor_gas_cmd = clip(pedal_command, 0., MAX_INTERCEPTOR_GAS)
     else:
       interceptor_gas_cmd = 0.
-    pcm_accel_cmd = clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+
+    pcm_accel_cmd = actuators.accel
+    if not CC.longActive:  # reset states
+      self.delayed_accel = 0.
+      self.delayed_derivative = 0.
+
+    y = [0.1, 0.1, 1.0]
+    RC = interp(CS.out.vEgo, [0, 5, 35], y)
+    alpha = 1. - DT_CTRL / (RC + DT_CTRL)
+    self.delayed_accel = self.delayed_accel * alpha + pcm_accel_cmd * (1. - alpha)
+
+    eagerness = 1.0
+    derivative = pcm_accel_cmd - self.delayed_accel  # store change in accel over some time constant (using exponential moving avg.)
+    self.delayed_derivative = self.delayed_derivative * alpha + derivative * (1. - alpha)  # calc exp. moving average for derivative
+    pcm_accel_cmd = pcm_accel_cmd - (self.delayed_derivative - derivative) * eagerness  # then modify accel using jerk of accel
+
+    pcm_accel_cmd = clip(pcm_accel_cmd, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))

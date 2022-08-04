@@ -5,6 +5,7 @@ from panda import Panda
 from selfdrive.car.toyota.tunes import LatTunes, LongTunes, set_long_tune, set_lat_tune
 from selfdrive.car.toyota.values import Ecu, CAR, ToyotaFlags, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, MIN_ACC_SPEED, EPS_SCALE, EV_HYBRID_CAR, CarControllerParams
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
+from selfdrive.car.disable_ecu import disable_ecu
 from selfdrive.car.interfaces import CarInterfaceBase
 
 EventName = car.CarEvent.EventName
@@ -216,6 +217,7 @@ class CarInterface(CarInterfaceBase):
     ret.enableGasInterceptor = 0x201 in fingerprint[0]
     # if the smartDSU is detected, openpilot can send ACC_CMD (and the smartDSU will block it from the DSU) or not (the DSU is "connected")
     ret.openpilotLongitudinalControl = smartDsu or ret.enableDsu or candidate in (TSS2_CAR - RADAR_ACC_CAR)
+    ret.openpilotLongitudinalControl |= disable_radar and candidate in RADAR_ACC_CAR
 
     if not ret.openpilotLongitudinalControl:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_TOYOTA_STOCK_LONGITUDINAL
@@ -238,6 +240,12 @@ class CarInterface(CarInterfaceBase):
       set_long_tune(ret.longitudinalTuning, LongTunes.TSS)
 
     return ret
+
+  @staticmethod
+  def init(CP, logcan, sendcan):
+    if CP.carFingerprint in RADAR_ACC_CAR and CP.openpilotLongitudinalControl:
+      # this is Honda: b'\x28\x83\x03'
+      disable_ecu(logcan, sendcan, addr=(0x750, 0xf), com_cont_req=b'\x28\x83\x01')
 
   # returns a car.CarState
   def _update(self, c):

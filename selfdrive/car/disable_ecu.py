@@ -23,13 +23,13 @@ def disable_ecu(logcan, sendcan, bus=0, addr=0x7d0, com_cont_req=b'\x28\x83\x01'
         cloudlog.warning("communication control disable tx/rx ...")
 
         query = IsoTpParallelQuery(sendcan, logcan, bus, [addr], [com_cont_req], [COM_CONT_RESPONSE], debug=debug)
-        query.get_data(0)
+        print('ECU RESPONSE: {}'.format(query.get_data(0.1)))
 
         cloudlog.warning("ecu disabled")
         return True
 
-    except Exception:
-      cloudlog.exception("ecu disable exception")
+    except Exception as e:
+      cloudlog.exception("ecu disable exception: {}".format(e))
 
     print(f"ecu disable retry ({i+1}) ...")
   cloudlog.warning("ecu disable failed")

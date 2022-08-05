@@ -111,7 +111,7 @@ class CarController:
 
     # tester present - w/ no response (keeps radar disabled)
     if self.CP.openpilotLongitudinalControl and self.CP.enableDsu:
-      if self.frame % 100 == 0:  # TODO: figure out rate
+      if self.frame % 10 == 0:  # TODO: figure out rate
         can_sends.append([0x791, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0])
 
     # ui mesg is at 1Hz but we send asap if:

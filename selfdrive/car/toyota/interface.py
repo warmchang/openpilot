@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 from cereal import car
 from common.conversions import Conversions as CV
 from panda import Panda
@@ -243,7 +244,9 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def init(CP, logcan, sendcan):
     if CP.openpilotLongitudinalControl:
-      disable_ecu(logcan, sendcan, addr=0x791, com_cont_req=b'\x28\x83\x01')
+      for i in range(10):
+        time.sleep(0.1)
+        disable_ecu(logcan, sendcan, addr=0x791, com_cont_req=b"\x1a\x88\x01")
 
   # returns a car.CarState
   def _update(self, c):

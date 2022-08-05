@@ -245,7 +245,7 @@ class CarInterface(CarInterfaceBase):
   def init(CP, logcan, sendcan):
     if CP.carFingerprint in RADAR_ACC_CAR and CP.openpilotLongitudinalControl:
       # this is Honda: b'\x28\x83\x03'
-      disable_ecu(logcan, sendcan, addr=(0x750, 0xf), com_cont_req=b'\x28\x83\x01')
+      disable_ecu(logcan, sendcan, addr=(0x750, 0xf), com_cont_req=b'\x1a\x88\x01')
 
   # returns a car.CarState
   def _update(self, c):

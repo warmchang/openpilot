@@ -13,7 +13,7 @@ def disable_ecu(logcan, sendcan, bus=0, addr=0x7d0, com_cont_req=b'\x28\x83\x01'
 
   This is used to disable the radar in some cars. Openpilot will emulate the radar.
   WARNING: THIS DISABLES AEB!"""
-  cloudlog.warning(f"ecu disable {hex(addr)} ...")
+  # cloudlog.warning(f"ecu disable {hex(addr)} ...")
 
   for i in range(retry):
     try:

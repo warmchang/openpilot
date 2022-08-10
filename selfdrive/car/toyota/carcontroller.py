@@ -46,7 +46,17 @@ class CarController:
       interceptor_gas_cmd = clip(pedal_command, 0., MAX_INTERCEPTOR_GAS)
     else:
       interceptor_gas_cmd = 0.
-    pcm_accel_cmd = clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+
+    pcm_accel_cmd = 0
+    if CC.longActive:
+      # Toyota is sensitive to lowering acceleration when starting, so
+      # at low speeds when future accel is high, use feedforward accel from planner.
+      speed_mult = interp(CS.out.vEgo, [MIN_ACC_SPEED / 2, MIN_ACC_SPEED], [1.0, 0.0])
+      accel_mult = interp(actuators.futureAccel, [1.2, 0.6], [1.0, 0.0])
+      ff_accel_ratio = speed_mult * accel_mult
+      pcm_accel_cmd = ff_accel_ratio * actuators.accelTarget + (1 - ff_accel_ratio) * actuators.accel
+
+    pcm_accel_cmd = clip(pcm_accel_cmd, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))

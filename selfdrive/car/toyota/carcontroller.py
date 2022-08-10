@@ -52,7 +52,8 @@ class CarController:
       # Toyota is sensitive to lowering acceleration when starting, so
       # at low speeds when future accel is high, use feedforward accel from planner.
       speed_mult = interp(CS.out.vEgo, [MIN_ACC_SPEED / 2, MIN_ACC_SPEED], [1.0, 0.0])
-      accel_mult = interp(actuators.futureAccel, [1.2, 0.6], [1.0, 0.0])
+      # TODO: try min(actuators.futureAccel, actuators.accelTarget) as x
+      accel_mult = interp(actuators.futureAccel, [0.6, 1.2], [0.0, 1.0])
       ff_accel_ratio = speed_mult * accel_mult
       pcm_accel_cmd = ff_accel_ratio * actuators.accelTarget + (1 - ff_accel_ratio) * actuators.accel
 

@@ -151,7 +151,7 @@ class CarState(CarStateBase):
     self.v_cruise_pcm_prev = 0
 
   def update(self, cp, cp_cam, cp_body):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     # car params
     v_weight_v = [0., 1.]  # don't trust smooth speed at low values to avoid premature zero snapping

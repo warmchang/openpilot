@@ -62,7 +62,7 @@ class CarInterface(CarInterfaceBase):
       self.speed = gps.gpsLocationExternal.speed
 
     # create message
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     # speeds
     ret.vEgo = self.speed

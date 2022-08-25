@@ -31,7 +31,7 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in PQ_CARS:
       return self.update_pq(pt_cp, cam_cp, ext_cp, trans_type)
 
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
     # Update vehicle speed and acceleration from ABS wheel speeds.
     ret.wheelSpeeds = self.get_wheel_speeds(
       pt_cp.vl["ESP_19"]["ESP_VL_Radgeschw_02"],
@@ -139,7 +139,7 @@ class CarState(CarStateBase):
     return ret
 
   def update_pq(self, pt_cp, cam_cp, ext_cp, trans_type):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
     # Update vehicle speed and acceleration from ABS wheel speeds.
     ret.wheelSpeeds = self.get_wheel_speeds(
       pt_cp.vl["Bremse_3"]["Radgeschw__VL_4_1"],

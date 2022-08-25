@@ -26,7 +26,7 @@ class CarState(CarStateBase):
     self.acc_type = 1
 
   def update(self, cp, cp_cam):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     ret.doorOpen = any([cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FL"], cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FR"],
                         cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_RL"], cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_RR"]])

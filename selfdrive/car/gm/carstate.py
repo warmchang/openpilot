@@ -19,7 +19,7 @@ class CarState(CarStateBase):
     self.buttons_counter = 0
 
   def update(self, pt_cp, cam_cp, loopback_cp):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = pt_cp.vl["ASCMSteeringButton"]["ACCButtons"]

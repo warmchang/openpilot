@@ -38,7 +38,7 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in CANFD_CAR:
       return self.update_canfd(cp, cp_cam)
 
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     cp_cruise = cp_cam if self.CP.carFingerprint in CAMERA_SCC_CAR else cp
 
@@ -134,7 +134,7 @@ class CarState(CarStateBase):
     return ret
 
   def update_canfd(self, cp, cp_cam):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     if self.CP.flags & HyundaiFlags.CANFD_HDA2:
       ret.gas = cp.vl["ACCELERATOR"]["ACCELERATOR_PEDAL"] / 255.

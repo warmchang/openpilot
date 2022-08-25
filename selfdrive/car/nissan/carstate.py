@@ -21,7 +21,7 @@ class CarState(CarStateBase):
     self.shifter_values = can_define.dv["GEARBOX"]["GEAR_SHIFTER"]
 
   def update(self, cp, cp_adas, cp_cam):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     if self.CP.carFingerprint in (CAR.ROGUE, CAR.XTRAIL, CAR.ALTIMA):
       ret.gas = cp.vl["GAS_PEDAL"]["GAS_PEDAL"]

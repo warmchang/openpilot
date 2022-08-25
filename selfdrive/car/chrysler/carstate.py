@@ -23,7 +23,7 @@ class CarState(CarStateBase):
 
   def update(self, cp, cp_cam):
 
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     # lock info
     ret.doorOpen = any([cp.vl["BCM_1"]["DOOR_OPEN_FL"],

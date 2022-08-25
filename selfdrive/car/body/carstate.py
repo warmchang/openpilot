@@ -7,7 +7,7 @@ STARTUP_TICKS = 100
 
 class CarState(CarStateBase):
   def update(self, cp):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     ret.wheelSpeeds.fl = cp.vl['MOTORS_DATA']['SPEED_L']
     ret.wheelSpeeds.fr = cp.vl['MOTORS_DATA']['SPEED_R']

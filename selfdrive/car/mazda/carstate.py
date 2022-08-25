@@ -20,7 +20,7 @@ class CarState(CarStateBase):
 
   def update(self, cp, cp_cam):
 
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
     ret.wheelSpeeds = self.get_wheel_speeds(
       cp.vl["WHEEL_SPEEDS"]["FL"],
       cp.vl["WHEEL_SPEEDS"]["FR"],

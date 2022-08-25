@@ -17,7 +17,7 @@ class CarState(CarStateBase):
       self.shifter_values = can_define.dv["Gear_Shift_by_Wire_FD1"]["TrnGear_D_RqDrv"]
 
   def update(self, cp, cp_cam):
-    ret = car.CarState.new_message()
+    ret = CarStateBase.get_std_car_state()
 
     # car speed
     ret.vEgoRaw = cp.vl["EngVehicleSpThrottle2"]["Veh_V_ActlEng"] * CV.KPH_TO_MS

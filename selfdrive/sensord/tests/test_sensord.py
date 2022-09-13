@@ -82,6 +82,7 @@ ALL_SENSORS = {
 
 SENSOR_BUS = 1
 I2C_ADDR_LSM = 0x6A
+I2C_ADDR_BMX_GYRO = 0x68
 LSM_INT_GPIO = 84
 
 def read_sensor_events(duration_sec):
@@ -282,6 +283,28 @@ class TestSensord(unittest.TestCase):
     time.sleep(1)
     state_two = get_proc_interrupts(LSM_INT_GPIO)
     assert state_one == state_two, "Interrupts received after sensord stop!"
+
+  @unittest.skip("Disable sensor sync test, signal was removed from panda")
+  def test_sensor_sync(self):
+    start = time.monotonic()
+    last_event = None
+    prev_state = False
+
+    timings = []
+    with SMBus(SENSOR_BUS, force=True) as bus:
+      while time.monotonic() - start < 2:
+        state = ((bus.read_i2c_block_data(I2C_ADDR_BMX_GYRO, 0x3F, 1)[0] & 0x01) != 0)
+        if state and not prev_state:
+          if last_event is not None:
+            timings.append(time.monotonic() - last_event)
+          last_event = time.monotonic()
+        prev_state = state
+        time.sleep(0.001)
+
+    assert len(timings) > 20, f"Not enough sensor sync events: {len(timings)}"
+    average_timing = sum(timings) / len(timings)
+    assert 0.04 < average_timing < 0.06, f"Average sensor sync timing bad: {average_timing}s"
+
 
 
 if __name__ == "__main__":

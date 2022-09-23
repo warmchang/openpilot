@@ -19,10 +19,17 @@ float3 color_correct(float3 rgb) {
   #endif
 
   // tone mapping params
+  #if IS_OX
+  const float gamma_k = 0.8;
+  const float gamma_b = 0.2;
+  const float mp = 0.01;
+  const float rk = 27 - 500*mp;
+  #else
   const float gamma_k = 0.75;
   const float gamma_b = 0.125;
-  const float mp = 0.01; // ideally midpoint should be adaptive
+  const float mp = 0.01;
   const float rk = 9 - 100*mp;
+  #endif
 
   // poly approximation for s curve
   return (x > mp) ?

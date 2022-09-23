@@ -24,11 +24,13 @@ OnroadWindow::OnroadWindow(QWidget *parent) : QWidget(parent) {
   split = new QHBoxLayout(split_wrapper);
   split->setContentsMargins(0, 0, 0, 0);
   split->setSpacing(0);
-  split->addWidget(nvg);
+  // split->addWidget(nvg);
 
   if (getenv("DUAL_CAMERA_VIEW")) {
     CameraViewWidget *arCam = new CameraViewWidget("camerad", VISION_STREAM_ROAD, true, this);
+    CameraViewWidget *oxCam = new CameraViewWidget("camerad", VISION_STREAM_WIDE_ROAD, true, this);
     split->insertWidget(0, arCam);
+    split->insertWidget(0, oxCam);
   }
 
   stacked_layout->addWidget(split_wrapper);

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.ford.values import CAR, CarParams, Ecu, TransmissionType, GearShifter
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -14,7 +13,6 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
 
     ret.carName = "ford"
-    ret.dashcamOnly = True
     ret.safetyConfigs = [get_safety_config(CarParams.SafetyModel.ford)]
 
     # Angle-based steering
@@ -47,7 +45,8 @@ class CarInterface(CarInterfaceBase):
       ret.transmissionType = TransmissionType.automatic
     else:
       ret.transmissionType = TransmissionType.manual
-      ret.minEnableSpeed = 20.0 * CV.MPH_TO_MS
+      # TODO: add footnote
+      # ret.minEnableSpeed = 20.0 * CV.MPH_TO_MS
 
     # BSM: Side_Detect_L_Stat, Side_Detect_R_Stat
     # TODO: detect bsm in car_fw?

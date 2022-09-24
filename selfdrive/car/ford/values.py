@@ -5,7 +5,7 @@ from typing import Dict, List, Union
 
 from cereal import car
 from selfdrive.car import dbc_dict
-from selfdrive.car.docs_definitions import CarInfo, Harness
+from selfdrive.car.docs_definitions import CarFootnote, CarInfo, Column, Harness
 from selfdrive.car.fw_query_definitions import FwQueryConfig, Request, StdQueries
 
 CarParams = car.CarParams
@@ -54,6 +54,12 @@ class RADAR:
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict("ford_lincoln_base_pt", RADAR.DELPHI_MRR))
 
 
+class Footnote(Enum):
+  FOCUS = CarFootnote(
+    "Refers only to the fourth generation Focus (C519) which is not available in the North American market.",
+    Column.MODEL)
+
+
 @dataclass
 class FordCarInfo(CarInfo):
   package: str = "Co-Pilot360 Assist+"
@@ -66,7 +72,7 @@ CAR_INFO: Dict[str, Union[CarInfo, List[CarInfo]]] = {
     FordCarInfo("Ford Kuga 2020-21", "Driver Assistance Pack"),
   ],
   CAR.EXPLORER_MK6: FordCarInfo("Ford Explorer 2020-22"),
-  CAR.FOCUS_MK4: FordCarInfo("Ford Focus EU 2019", "Driver Assistance Pack"),
+  CAR.FOCUS_MK4: FordCarInfo("Ford Focus 2019-22", "Driver Assistance Pack", footnotes=[Footnote.FOCUS]),
 }
 
 FW_QUERY_CONFIG = FwQueryConfig(

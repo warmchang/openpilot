@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 from collections import defaultdict
 from typing import Any, Optional, Set, Tuple
 from tqdm import tqdm
@@ -21,9 +22,11 @@ MODEL_TO_BRAND = {c: b for b, e in VERSIONS.items() for c in e}
 REQUESTS = [(brand, r) for brand, config in FW_QUERY_CONFIGS.items() for r in config.requests]
 
 
-def chunks(l, n=128):
+def chunks(l, n=1):
   for i in range(0, len(l), n):
+    print(l[i:i + n])
     yield l[i:i + n]
+    time.sleep(5)
 
 
 def build_fw_dict(fw_versions, filter_brand=None):
@@ -91,8 +94,14 @@ def match_fw_to_car_fuzzy(fw_versions_dict, log=True, exclude=None):
 
 
 def is_fw_for_brand(fw_versions, brand):
-  brand_fw_versions = {fw_version for ecu in VERSIONS[brand].values() for fw_list in ecu.values() for fw_version in fw_list}
-  return not set(fw_versions).isdisjoint(brand_fw_versions)
+  fw_version_strings = {fw.fwVersion for fw in fw_versions}
+  brand_version_strings = {fw_version for ecu in VERSIONS[brand].values() for fw_list in ecu.values() for fw_version in fw_list}
+  print("\n\n\n")
+  print(len(fw_versions))
+  print("\n\n\n")
+  result = not fw_version_strings.isdisjoint(brand_version_strings)
+  print(f"\n\n\n\nbrand: {brand} = {result}\n\n\n\n")
+  return result
 
 
 def match_fw_to_car_exact(fw_versions_dict, brand=None):
@@ -101,7 +110,7 @@ def match_fw_to_car_exact(fw_versions_dict, brand=None):
   essential the FW version can be missing to get a fingerprint, but if it's present it
   needs to match the database."""
   invalid = []
-  candidates = [FW_VERSIONS[brand]] if brand else FW_VERSIONS
+  candidates = VERSIONS[brand] if brand else FW_VERSIONS
 
   for candidate, fws in candidates.items():
     for ecu, expected_versions in fws.items():
@@ -205,22 +214,23 @@ def get_fw_versions_ordered(logcan, sendcan, ecu_rx_addrs, timeout=0.1, debug=Fa
   all_car_fw = []
   brand_matches = get_brand_ecu_matches(ecu_rx_addrs)
 
-  for brand in sorted(brand_matches, key=lambda b: len(brand_matches[b]), reverse=True):
-    # retry a brand up to 10 times once any ecu fw version is an exact match
-    # (some ecus skip sending frames from time to time, and other ecus may have rate limiting)
-    for _ in range(10):
-      car_fw = get_fw_versions(logcan, sendcan, query_brand=brand, timeout=timeout, debug=debug, progress=progress)
-      all_car_fw.extend(car_fw)
-      if not is_fw_for_brand(car_fw, brand):
-        break
-      # Try to match using FW returned from this brand only
-      matches = match_fw_to_car_exact(build_fw_dict(car_fw), brand)
-      if len(matches) == 1:
-        break
-      # wait before retry in case failures are due to an ECU rate limiting us
-      print(f"retrying brand: {brand} ...")
-      time.sleep(1)
-
+  for _ in range(5):
+    for brand in sorted(brand_matches, key=lambda b: len(brand_matches[b]), reverse=True):
+      # retry a brand up to 10 times once any ecu fw version is an exact match
+      # (some ecus skip sending frames from time to time, and other ecus may have rate limiting)
+      for _ in range(10):
+        car_fw = get_fw_versions(logcan, sendcan, query_brand=brand, timeout=timeout, debug=debug, progress=progress)
+        all_car_fw.extend(car_fw)
+        if not is_fw_for_brand(all_car_fw, brand):
+          break
+        # Try to match using FW returned from this brand only
+        matches = match_fw_to_car_exact(build_fw_dict(car_fw), brand)
+        if len(matches) == 1:
+          return all_car_fw
+        # wait before retry in case failures are due to an ECU rate limiting us
+        print(f"\n\n\n\nretrying brand: {brand} ...\n\n\n\n")
+        time.sleep(1)
+    print("\n\n\n\nretry all brands\n\n\n\n")
   return all_car_fw
 
 
@@ -263,7 +273,6 @@ def get_fw_versions(logcan, sendcan, query_brand=None, extra=None, timeout=0.1, 
         try:
           addrs = [(a, s) for (b, a, s) in addr_chunk if b in (brand, 'any') and
                    (len(r.whitelist_ecus) == 0 or ecu_types[(b, a, s)] in r.whitelist_ecus)]
-
           if addrs:
             query = IsoTpParallelQuery(sendcan, logcan, r.bus, addrs, r.request, r.response, r.rx_offset, debug=debug)
             for (addr, rx_addr), version in query.get_data(timeout).items():

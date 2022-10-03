@@ -1,11 +1,23 @@
 from selfdrive.car import make_can_msg
 
 def create_buttons(packer, bus, idx, button):
-  values = {
-    "ACCButtons": button,
-    "RollingCounter": idx,
+
+  # by stock counter idx (0-4)
+  # these are no button pressed (state 1)
+  dats = {
+    0: [0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0xff],
+    1: [0x00, 0x00, 0x00, 0x01, 0x01, 0x15, 0xee],
+    2: [0x00, 0x00, 0x00, 0x01, 0x02, 0x1a, 0xff],
+    3: [0x00, 0x00, 0x00, 0x01, 0x03, 0x1f, 0xcc],
   }
-  return packer.make_can_msg("ASCMSteeringButton", bus, values)
+
+  # values = {
+  #   "ACCButtons": button,
+  #   "RollingCounter": idx,
+  # }
+  msg = packer.make_can_msg("ASCMSteeringButton", bus, {})
+  msg[2] = bytes(dats[idx])
+  return msg
 
 def create_steering_control(packer, bus, apply_steer, idx, lkas_active):
 

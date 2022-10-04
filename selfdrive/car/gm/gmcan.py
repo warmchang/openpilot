@@ -1,23 +1,31 @@
 from selfdrive.car import make_can_msg
+from selfdrive.car.gm.values import CruiseButtons
+
 
 def create_buttons(packer, bus, idx, button):
-
-  # by stock counter idx (0-4)
-  # these are no button pressed (state 1)
-  dats = {
-    0: [0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0xff],
-    1: [0x00, 0x00, 0x00, 0x01, 0x01, 0x15, 0xee],
-    2: [0x00, 0x00, 0x00, 0x01, 0x02, 0x1a, 0xff],
-    3: [0x00, 0x00, 0x00, 0x01, 0x03, 0x1f, 0xcc],
+  # TODO: calculate these
+  checksums = {
+    CruiseButtons.CANCEL: {
+      0: 175,
+      1: 1438,
+      2: 2701,
+      3: 3964,
+    },
+    CruiseButtons.RES_ACCEL: {
+      0: 239,
+      1: 1502,
+      2: 2765,
+      3: 4028,
+    }
   }
 
-  # values = {
-  #   "ACCButtons": button,
-  #   "RollingCounter": idx,
-  # }
-  msg = packer.make_can_msg("ASCMSteeringButton", bus, {})
-  msg[2] = bytes(dats[idx])
-  return msg
+  values = {
+    "ACCButtons": button,
+    "RollingCounter": idx,
+    "ButtonAlwaysOne": 1,
+    "SteeringButtonChecksum": checksums[button][idx % 4],
+  }
+  return packer.make_can_msg("ASCMSteeringButton", bus, values)
 
 def create_steering_control(packer, bus, apply_steer, idx, lkas_active):
 

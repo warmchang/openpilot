@@ -109,12 +109,15 @@ class CarController:
 
     else:
       # Stock longitudinal, integrated at camera
-      if self.frame % 3 == 0:
-        can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.CAMERA, CS.buttons_counter, CruiseButtons.CANCEL, self.frame))
-      # if (self.frame - self.last_button_frame) * DT_CTRL > 0.04:
-      #   if CC.cruiseControl.cancel:
-      #     self.last_button_frame = self.frame
-      #     can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.CAMERA, CS.buttons_counter, CruiseButtons.CANCEL))
+      # if self.frame % 3 == 0:
+      #   can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.CAMERA, CS.buttons_counter, CruiseButtons.CANCEL, self.frame))
+      if (self.frame - self.last_button_frame) * DT_CTRL > 0.04:
+        if CC.cruiseControl.cancel:
+          self.last_button_frame = self.frame
+          can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.CAMERA, CS.buttons_counter, CruiseButtons.CANCEL))
+        elif CC.cruiseControl.resume:
+          self.last_button_frame = self.frame
+          can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.CAMERA, CS.buttons_counter, CruiseButtons.RES_ACCEL))
 
     # Show green icon when LKA torque is applied, and
     # alarming orange icon when approaching torque limit.

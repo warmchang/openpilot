@@ -190,7 +190,10 @@ class TorqueEstimator:
     if which == "carControl":
       self.raw_points["carControl_t"].append(t + self.lag)
       self.raw_points["steer_torque"].append(-msg.actuatorsOutput.steer)
-      self.raw_points["active"].append(msg.latActive)
+      # self.raw_points["active"].append(msg.latActive)
+    elif which == "controlsState":
+      self.raw_points["controlsState_t"].append(t + self.lag)
+      self.raw_points["active"].append(msg.active)
     elif which == "carState":
       self.raw_points["carState_t"].append(t + self.lag)
       self.raw_points["vego"].append(msg.vEgo)
@@ -199,7 +202,7 @@ class TorqueEstimator:
       if len(self.raw_points['steer_torque']) == self.hist_len:
         yaw_rate = msg.angularVelocityCalibrated.value[2]
         roll = msg.orientationNED.value[0]
-        active = np.interp(np.arange(t - MIN_ENGAGE_BUFFER, t, DT_MDL), self.raw_points['carControl_t'], self.raw_points['active']).astype(bool)
+        active = np.interp(np.arange(t - MIN_ENGAGE_BUFFER, t, DT_MDL), self.raw_points['controlsState_t'], self.raw_points['active']).astype(bool)
         steer_override = np.interp(np.arange(t - MIN_ENGAGE_BUFFER, t, DT_MDL), self.raw_points['carState_t'], self.raw_points['steer_override']).astype(bool)
         vego = np.interp(t, self.raw_points['carState_t'], self.raw_points['vego'])
         steer = np.interp(t, self.raw_points['carControl_t'], self.raw_points['steer_torque'])
@@ -251,7 +254,7 @@ def main(sm=None, pm=None):
   config_realtime_process([0, 1, 2, 3], 5)
 
   if sm is None:
-    sm = messaging.SubMaster(['carControl', 'carState', 'liveLocationKalman'], poll=['liveLocationKalman'])
+    sm = messaging.SubMaster(['carControl', 'carState', 'liveLocationKalman', 'controlsState'], poll=['liveLocationKalman'])
 
   if pm is None:
     pm = messaging.PubMaster(['liveTorqueParameters'])

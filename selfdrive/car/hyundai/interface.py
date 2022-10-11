@@ -342,7 +342,12 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def init(CP, logcan, sendcan):
     if CP.openpilotLongitudinalControl:
-      disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x83\x01')
+      # TODO: does LEGACY_SAFETY_MODE_CAR work here? all of those cars need to have a KWP2000 radar
+      if CP.carFingerprint in (CAR.KIA_OPTIMA_G4_FL,):
+        disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x03\x01')
+        # disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x83\x01')
+      else:
+        disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x83\x01')
 
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)

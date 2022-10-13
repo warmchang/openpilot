@@ -64,3 +64,5 @@ class FwQueryConfig:
   requests: List[Request]
   # Overrides and removes from essential ecus for specific models and ecus (exact matching)
   non_essential_ecus: Dict[capnp.lib.capnp._EnumModule, List[str]] = field(default_factory=dict)
+  # Ecus added for data collection, not to be fingerprinted on
+  extra_ecus: Dict[capnp.lib.capnp._EnumModule, List[str]] = field(default_factory=dict)

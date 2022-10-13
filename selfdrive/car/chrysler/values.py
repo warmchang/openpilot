@@ -166,14 +166,11 @@ FW_QUERY_CONFIG = FwQueryConfig(
       bus=0,
     ),
   ],
+  # Ecus present in hybrids, currently in data collection mode
+  extra_ecus={(0x7e2, None): Ecu.hcp, (0x7e4, None): Ecu.abs},
 )
 
 FW_VERSIONS = {
-  CAR.PACIFICA_2019_HYBRID: {
-    (Ecu.hcp, 0x7e2, None): [],
-    (Ecu.abs, 0x7e4, None): [],
-  },
-
   CAR.RAM_1500: {
     (Ecu.combinationMeter, 0x742, None): [
       b'68294063AH',

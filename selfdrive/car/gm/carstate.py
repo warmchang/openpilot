@@ -16,6 +16,7 @@ class CarState(CarStateBase):
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["ECMPRDNL2"]["PRNDL2"]
     self.loopback_lka_steering_cmd_updated = False
+    self.loopback_lka_steering_cmd_ts = 0
     self.camera_lka_steering_cmd_counter = 0
     self.buttons_counter = 0
 
@@ -28,6 +29,7 @@ class CarState(CarStateBase):
 
     # Variables used for avoiding LKAS faults
     self.loopback_lka_steering_cmd_updated = len(loopback_cp.vl_all["ASCMLKASteeringCmd"]) > 0
+    self.loopback_lka_steering_cmd_ts = loopback_cp.ts["ASCMLKASteeringCmd"]
     if self.CP.networkLocation == NetworkLocation.fwdCamera:
       self.camera_lka_steering_cmd_counter = cam_cp.vl["ASCMLKASteeringCmd"]["RollingCounter"]
 

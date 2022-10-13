@@ -1,7 +1,7 @@
 from cereal import car
 from common.conversions import Conversions as CV
 from common.numpy_fast import interp
-from common.realtime import DT_CTRL
+from common.realtime import sec_since_boot, DT_CTRL
 from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.gm import gmcan
@@ -45,7 +45,9 @@ class CarController:
     # Steering (50Hz)
     # Avoid GM EPS faults when transmitting messages too close together: skip this transmit if we just received the
     # next Panda loopback confirmation in the current CS frame.
-    if CS.loopback_lka_steering_cmd_updated:
+    cur_t = int(sec_since_boot() * 1e9)
+    loopback_lka_steering_cmd_updated_recently = (cur_t - CS.loopback_lka_steering_cmd_ts) < 1.2e+7  # 12 ms (1.2 frames)
+    if loopback_lka_steering_cmd_updated_recently:
       self.lka_steering_cmd_counter += 1
       self.sent_lka_steering_cmd = True
     elif (self.frame % self.params.STEER_STEP) == 0:

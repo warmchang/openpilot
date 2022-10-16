@@ -31,7 +31,7 @@ class CarState(CarStateBase):
 
     # brake pedal
     ret.brake = cp.vl["BrakeSnData_4"]["BrkTot_Tq_Actl"] / 32756.  # torque in Nm
-    ret.brakePressed = cp.vl["EngBrakeData"]["BpedDrvAppl_D_Actl"] == 2
+    ret.brakePedalPressed = cp.vl["EngBrakeData"]["BpedDrvAppl_D_Actl"] == 2
     ret.parkingBrake = cp.vl["DesiredTorqBrk"]["PrkBrkStatus"] in (1, 2)
 
     # steering wheel

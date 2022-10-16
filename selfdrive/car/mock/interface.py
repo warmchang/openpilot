@@ -64,7 +64,7 @@ class CarInterface(CarInterfaceBase):
     a = self.speed - self.prev_speed
 
     ret.aEgo = a
-    ret.brakePressed = a < -0.5
+    ret.brakePedalPressed = a < -0.5
 
     ret.standstill = self.speed < 0.01
     ret.wheelSpeeds.fl = self.speed

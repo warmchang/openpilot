@@ -51,7 +51,7 @@ class CarState(CarStateBase):
     ret.steeringRateDeg = cp.vl["STEER_RATE"]["STEER_ANGLE_RATE"]
 
     # TODO: this should be from 0 - 1.
-    ret.brakePressed = cp.vl["PEDALS"]["BRAKE_ON"] == 1
+    ret.brakePedalPressed = cp.vl["PEDALS"]["BRAKE_ON"] == 1
     ret.brake = cp.vl["BRAKE"]["BRAKE_PRESSURE"]
 
     ret.seatbeltUnlatched = cp.vl["SEATBELT"]["DRIVER_SEATBELT"] == 0

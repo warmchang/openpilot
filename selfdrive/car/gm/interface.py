@@ -217,7 +217,7 @@ class CarInterface(CarInterfaceBase):
     if self.CP.networkLocation == NetworkLocation.fwdCamera and self.CP.pcmCruise:
       # The ECM has a higher brake pressed threshold than the camera, causing an
       # ACC fault when you engage at a stop with your foot partially on the brake
-      if ret.vEgoRaw < 0.1 and ret.brake < 20:
+      if ret.vEgoRaw < 0.1 and not ret.brakePedalPressed:
         events.add(EventName.gmAccFaultedTemp)
 
     ret.events = events.to_msg()

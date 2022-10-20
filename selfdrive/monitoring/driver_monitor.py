@@ -146,6 +146,7 @@ class DriverStatus():
     self.terminal_alert_cnt = 0
     self.terminal_time = 0
     self.step_change = 0.
+    self.step_factor = 1.
     self.active_monitoring_mode = True
     self.is_model_uncertain = False
     self.hi_stds = 0
@@ -157,7 +158,7 @@ class DriverStatus():
   def _set_timers(self, active_monitoring):
     if self.active_monitoring_mode and self.awareness <= self.threshold_prompt:
       if active_monitoring:
-        self.step_change = self.settings._DT_DMON / self.settings._DISTRACTED_TIME
+        self.step_change = self.settings._DT_DMON / self.settings._DISTRACTED_TIME * self.step_factor
       else:
         self.step_change = 0.
       return  # no exploit after orange alert
@@ -172,7 +173,7 @@ class DriverStatus():
 
       self.threshold_pre = self.settings._DISTRACTED_PRE_TIME_TILL_TERMINAL / self.settings._DISTRACTED_TIME
       self.threshold_prompt = self.settings._DISTRACTED_PROMPT_TIME_TILL_TERMINAL / self.settings._DISTRACTED_TIME
-      self.step_change = self.settings._DT_DMON / self.settings._DISTRACTED_TIME
+      self.step_change = self.settings._DT_DMON / self.settings._DISTRACTED_TIME * self.step_factor
       self.active_monitoring_mode = True
     else:
       if self.active_monitoring_mode:
@@ -220,6 +221,7 @@ class DriverStatus():
   def set_policy(self, model_data, car_speed):
     bp = model_data.meta.disengagePredictions.brakeDisengageProbs[0] # brake disengage prob in next 2s
     k1 = max(-0.00156*((car_speed-16)**2)+0.6, 0.2)
+    k2 = max(-0.00125*((car_speed-18)**2)+0.5, 0.1)
     bp_normal = max(min(bp / k1, 0.5),0)
     self.pose.cfactor_pitch = interp(bp_normal, [0, 0.5],
                                            [self.settings._POSE_PITCH_THRESHOLD_SLACK,
@@ -227,6 +229,9 @@ class DriverStatus():
     self.pose.cfactor_yaw = interp(bp_normal, [0, 0.5],
                                            [self.settings._POSE_YAW_THRESHOLD_SLACK,
                                             self.settings._POSE_YAW_THRESHOLD_STRICT]) / self.settings._POSE_YAW_THRESHOLD
+    bp_normal2 = max(min(bp / k2, 1.0),0)
+    self.step_factor = self.settings._DISTRACTED_TIME / interp(bp_normal2, [0, 1],
+                                   [self.settings._DISTRACTED_TIME, 2])
 
   def update_states(self, driver_state, cal_rpy, car_speed, op_engaged):
     rhd_pred = driver_state.wheelOnRightProb

@@ -711,7 +711,7 @@ def ws_send(ws, end_event):
 
 def ws_manage(ws, end_event):
   params = Params()
-  awake_prev = False
+  awake_prev = None
 
   # missing in pysocket
   TCP_USER_TIMEOUT = 18

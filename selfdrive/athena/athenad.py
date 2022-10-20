@@ -678,6 +678,7 @@ def ws_recv(ws, end_event):
           data = data.decode("utf-8")
         recv_queue.put_nowait(data)
       elif opcode == ABNF.OPCODE_PING:
+        cloudlog.debug("athena.ws_recv.ping")
         last_ping = int(sec_since_boot() * 1e9)
         Params().put("LastAthenaPingTime", str(last_ping))
     except WebSocketTimeoutException:

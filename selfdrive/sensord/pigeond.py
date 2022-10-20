@@ -148,7 +148,7 @@ def init_baudrate(pigeon: TTYPigeon):
   time.sleep(0.1)
   pigeon.set_baud(460800)
 
-def restore_nav_database():
+def restore_nav_database(pigeon):
   print("Restoring the navigation database")
   with open('/data/tmp/nav_db', 'r') as f:
     msgs = json.load(f)
@@ -202,9 +202,10 @@ def initialize_pigeon(pigeon: TTYPigeon) -> bool:
 
       # restore navigation database
       if os.path.exists('/data/tmp/nav_db'):
-        restore_nav_database()
+        restore_nav_database(pigeon)
 
       # try restoring almanac backup
+      '''
       pigeon.send(b"\xB5\x62\x09\x14\x00\x00\x1D\x60")
       restore_status = pigeon.wait_for_backup_restore_status()
       if restore_status == 2:
@@ -213,6 +214,7 @@ def initialize_pigeon(pigeon: TTYPigeon) -> bool:
         cloudlog.warning("no almanac backup found")
       else:
         cloudlog.error(f"failed to restore almanac backup, status: {restore_status}")
+      '''
 
       # sending time to ublox
       t_now = datetime.utcnow()
@@ -281,51 +283,50 @@ def deinitialize_and_exit(pigeon: Optional[TTYPigeon]):
   DB_HEADER = b'\xb5\x62\x13\x80'
   db_data = []
 
+  should_payloads = 0
+
   timeout = 5
   dat = b''
   st = time.monotonic()
-  do_while = True
-  while do_while:
-    # needs proper message parsing, including length
+  got_ack = False
+  while True:
     dat += pigeon.receive()
-    if DB_HEADER in dat:
-      print("Received DB_HEADER from ublox")
+    if b'\xb5\x62\x13\x60\x08\x00' in dat: # ASSIST ACK
 
-      msgs = dat.split(b'\xb5\x62')
+      # check if length matches
+      idx = dat.find(b'\xb5\x62\x13\x60\x08\x00')
+      m = dat[idx:idx+14]
+      print(f"Received ACK from ublox {m}")
 
-      trash_data = []
-      for m in msgs:
-        if m.startswith(b"\x13\x80"): # UBX-MGA-DBD (assist database message)
-          l = msg_len = 6 + (m[3] << 8 | m[2]) # dont calc header
+      should_payloads = m[13]<<24 | m[12]<<16 | m[11]<<8 | m[10]
+      print(f"ach payload length {should_payloads}")
 
-          if len(m) == l:
-            db_data.append(binascii.hexlify(b'\xb5\x62' + m).decode('utf-8'))
-          else:
-            # not full message received, push back on dat
-            trash_data.append(m)
-
-        elif m.startswith(b'\x13\x60\x08\x00'): # ASSIST ACK
-          print(f"Received ACK from ublox {m}")
-          do_while = False
-
-          # check if length matches
-          sl = m[11]<<24 | m[10]<<16 | m[9]<<8 | m[8]
-          print(f"{sl} {len(db_data)}")
-          if sl != len(db_data):
-            print("error reading navigation database")
-            db_data = []
-
-        elif m.startswith(b'\x05\x00\x02\x00'): # NACK
-          print("Received NACK")
-          do_while = False
-
-      print(f"trash data: {trash_data}")
-      dat = b'\xb5\x62'.join(trash_data)
-
+      got_ack = True
+      break
+    elif b'\xb5\x62\x05\x00\x02\x00' in dat: # NACK
+      print("Received NACK")
+      break
     elif time.monotonic() - st > timeout:
       print("No response from ublox")
       raise TimeoutError('No response from ublox')
     time.sleep(0.001)
+
+  # split received data
+  print("Received DB_HEADER from ublox")
+
+  msgs = dat.split(b'\xb5\x62')
+  for m in msgs:
+    if not m.startswith(b'\x13\x80'): # UBX-MGA-DBD (assist database message)
+      continue
+
+    l = msg_len = 4 + (m[3] << 8 | m[2]) + 2
+    #print(f"len diff: {l} {len(m)}")
+    if len(m) == l:
+      db_data.append(binascii.hexlify(b'\xb5\x62' + m).decode('utf-8'))
+
+  if should_payloads != len(db_data):
+    print("Error polling navigation database")
+    db_data = []
 
   print(f"DB messages: {len(db_data)}")
   with open('/data/tmp/nav_db', 'w+') as f:
@@ -378,10 +379,15 @@ def run_receiving(pigeon: TTYPigeon, pm: messaging.PubMaster, duration: int = 0)
 def main():
   assert TICI, "unsupported hardware for pigeond"
 
+  start_time = time.monotonic()
+
   pigeon, pm = create_pigeon()
   init_baudrate(pigeon)
   r = initialize_pigeon(pigeon)
   Params().put_bool("UbloxAvailable", r)
+
+  end_time = time.monotonic()
+  print(f"pigeond: startup time: {end_time - start_time}")
 
   # start receiving data
   run_receiving(pigeon, pm)

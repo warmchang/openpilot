@@ -710,8 +710,11 @@ def ws_send(ws, end_event):
 
 
 def ws_manage(ws, end_event):
-  # params = Params()
-  # awake_prev = False
+  params = Params()
+  awake_prev = False
+
+  # missing in pysocket
+  TCP_USER_TIMEOUT = 18
 
   while not end_event.is_set():
     # Default socket options:
@@ -728,15 +731,19 @@ def ws_manage(ws, end_event):
     print(f"TCP_KEEPCNT: {sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT)}")
     print(f"TCP_USER_TIMEOUT: {sock.getsockopt(socket.IPPROTO_TCP, TCP_USER_TIMEOUT)}")
 
-    # awake = params.get_bool("IsDeviceAwake")
-    # if awake != awake_prev:
-    #   awake_prev = awake
+    awake = params.get_bool("IsDeviceAwake")
+    if awake != awake_prev:
+      awake_prev = awake
 
-    #   keepidle = 5 if awake else 30  # seconds
-    #   sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, keepidle)
+      so_keepalive = 1 if awake else 0
+      sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, so_keepalive)
+      cloudlog.debug(f"athena.ws_manage SO_KEEPALIVE: {so_keepalive}")
 
-    #   user_timeout = 40*1000 if awake else 60*1000  # milliseconds
-    #   sock.setsockopt(socket.IPPROTO_TCP, TCP_USER_TIMEOUT, user_timeout)
+      # keepidle = 5 if awake else 30  # seconds
+      # sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, keepidle)
+
+      # user_timeout = 40*1000 if awake else 60*1000  # milliseconds
+      # sock.setsockopt(socket.IPPROTO_TCP, TCP_USER_TIMEOUT, user_timeout)
 
     time.sleep(2)
 

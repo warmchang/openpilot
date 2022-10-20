@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+import os
 import sys
 import time
 import signal
 import serial
 import struct
 import requests
+import json
+import binascii
 import urllib.parse
 from datetime import datetime
 from typing import List, Optional, Tuple
@@ -145,6 +148,18 @@ def init_baudrate(pigeon: TTYPigeon):
   time.sleep(0.1)
   pigeon.set_baud(460800)
 
+def restore_nav_database():
+  print("Restoring the navigation database")
+  with open('/data/tmp/nav_db', 'r') as f:
+    msgs = json.load(f)
+
+  for i, d in enumerate(msgs):
+    try:
+      msg = binascii.unhexlify(d)
+      pigeon.send_with_ack(msg, ack=UBLOX_ASSIST_ACK)
+    except:
+      print(f"restore msg not accepted: {i} {msg}")
+      return
 
 def initialize_pigeon(pigeon: TTYPigeon) -> bool:
   # try initializing a few times
@@ -184,6 +199,10 @@ def initialize_pigeon(pigeon: TTYPigeon) -> bool:
       pigeon.send_with_ack(b"\xB5\x62\x06\x01\x03\x00\x0A\x09\x01\x1E\x70")
       pigeon.send_with_ack(b"\xB5\x62\x06\x01\x03\x00\x0A\x0B\x01\x20\x74")
       cloudlog.debug("pigeon configured")
+
+      # restore navigation database
+      if os.path.exists('/data/tmp/nav_db'):
+        restore_nav_database()
 
       # try restoring almanac backup
       pigeon.send(b"\xB5\x62\x09\x14\x00\x00\x1D\x60")
@@ -253,6 +272,64 @@ def deinitialize_and_exit(pigeon: Optional[TTYPigeon]):
         cloudlog.error("Error storing almanac")
     except TimeoutError:
       pass
+
+  # poll navigation database (p354)
+  print("poll navigation database")
+  pigeon.send(b"\xB5\x62\x13\x80\x00\x00\x93\xcc")
+
+  # manually wait for ACK, as the number of messages needs to be parsed
+  DB_HEADER = b'\xb5\x62\x13\x80'
+  db_data = []
+
+  timeout = 5
+  dat = b''
+  st = time.monotonic()
+  do_while = True
+  while do_while:
+    # needs proper message parsing, including length
+    dat += pigeon.receive()
+    if DB_HEADER in dat:
+      print("Received DB_HEADER from ublox")
+
+      msgs = dat.split(b'\xb5\x62')
+
+      trash_data = []
+      for m in msgs:
+        if m.startswith(b"\x13\x80"): # UBX-MGA-DBD (assist database message)
+          l = msg_len = 6 + (m[3] << 8 | m[2]) # dont calc header
+
+          if len(m) == l:
+            db_data.append(binascii.hexlify(b'\xb5\x62' + m).decode('utf-8'))
+          else:
+            # not full message received, push back on dat
+            trash_data.append(m)
+
+        elif m.startswith(b'\x13\x60\x08\x00'): # ASSIST ACK
+          print(f"Received ACK from ublox {m}")
+          do_while = False
+
+          # check if length matches
+          sl = m[11]<<24 | m[10]<<16 | m[9]<<8 | m[8]
+          print(f"{sl} {len(db_data)}")
+          if sl != len(db_data):
+            print("error reading navigation database")
+            db_data = []
+
+        elif m.startswith(b'\x05\x00\x02\x00'): # NACK
+          print("Received NACK")
+          do_while = False
+
+      print(f"trash data: {trash_data}")
+      dat = b'\xb5\x62'.join(trash_data)
+
+    elif time.monotonic() - st > timeout:
+      print("No response from ublox")
+      raise TimeoutError('No response from ublox')
+    time.sleep(0.001)
+
+  print(f"DB messages: {len(db_data)}")
+  with open('/data/tmp/nav_db', 'w+') as f:
+    json.dump(db_data, f)
 
   # turn off power and exit cleanly
   set_power(False)

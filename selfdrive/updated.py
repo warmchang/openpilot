@@ -10,6 +10,7 @@ import fcntl
 import time
 import threading
 from collections import defaultdict
+from functools import wraps
 from pathlib import Path
 from typing import List, Union, Optional
 from markdown_it import MarkdownIt
@@ -35,6 +36,19 @@ OVERLAY_INIT = Path(os.path.join(BASEDIR, ".overlay_init"))
 
 DAYS_NO_CONNECTIVITY_MAX = 14     # do not allow to engage after this many days
 DAYS_NO_CONNECTIVITY_PROMPT = 10  # send an offroad prompt after this many days
+
+
+def timeit(func):
+  @wraps(func)
+  def timeit_wrapper(*args, **kwargs):
+    start_time = time.perf_counter()
+    result = func(*args, **kwargs)
+    end_time = time.perf_counter()
+    total_time = end_time - start_time
+    cloudlog.info(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+    return result
+  return timeit_wrapper
+
 
 class WaitTimeHelper:
   def __init__(self):
@@ -163,6 +177,7 @@ def init_overlay() -> None:
   cloudlog.info(f"git diff output:\n{git_diff}")
 
 
+@timeit
 def finalize_update() -> None:
   """Take the current OverlayFS merged view and finalize a copy outside of
   OverlayFS, ready to be swapped-in at BASEDIR. Copy using shutil.copytree"""
@@ -318,6 +333,7 @@ class Updater:
       remaining = max(DAYS_NO_CONNECTIVITY_MAX - dt.days, 1)
       set_offroad_alert("Offroad_ConnectivityNeededPrompt", True, extra_text=f"{remaining} day{'' if remaining == 1 else 's'}.")
 
+  @timeit
   def check_for_update(self) -> None:
     cloudlog.info("checking for updates")
 
@@ -348,6 +364,7 @@ class Updater:
     else:
       cloudlog.info(f"up to date on {cur_branch} ({str(cur_commit)[:7]})")
 
+  @timeit
   def fetch_update(self) -> None:
     cloudlog.info("attempting git fetch inside staging overlay")
 
@@ -421,6 +438,7 @@ def main() -> None:
   # Run the update loop
   while True:
     wait_helper.ready_event.clear()
+    start_time = time.monotonic()
 
     # Attempt an update
     exception = None
@@ -465,6 +483,9 @@ def main() -> None:
     # infrequent attempts if we successfully updated recently
     wait_helper.only_check_for_update = False
     wait_helper.sleep(10 if CI else 5*60 if update_failed_count > 0 else 1.5*60*60)
+
+    loop_time = time.monotonic() - start_time
+    cloudlog.info("update loop time: %.1f", loop_time)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 #include "selfdrive/navd/map_renderer.h"
 
+#include <cmath>
 #include <string>
 #include <QApplication>
 #include <QBuffer>
@@ -10,10 +11,25 @@
 #include "selfdrive/ui/qt/maps/map_helpers.h"
 
 const float DEFAULT_ZOOM = 13.5; // Don't go below 13 or features will start to disappear
-const int WIDTH = 512;
+const int WIDTH = 256;
 const int HEIGHT = WIDTH;
 
 const int NUM_VIPC_BUFFERS = 4;
+
+const int EARTH_CIRCUMFERENCE_METERS = 40075000;
+const int PIXELS_PER_TILE = 256;
+
+float get_meters_per_pixel(float lat, float zoom) {
+  float num_tiles = pow(2, zoom+1);
+  float meters_per_tile = cos(DEG2RAD(lat)) * EARTH_CIRCUMFERENCE_METERS / num_tiles;
+  return meters_per_tile / PIXELS_PER_TILE;
+}
+
+float get_zoom_level_for_scale(float lat, float meters_per_pixel) {
+  float meters_per_tile = meters_per_pixel * PIXELS_PER_TILE;
+  float num_tiles = cos(DEG2RAD(lat)) * EARTH_CIRCUMFERENCE_METERS / meters_per_tile;
+  return log2(num_tiles) - 1;
+}
 
 MapRenderer::MapRenderer(const QMapboxGLSettings &settings, bool online) : m_settings(settings) {
   QSurfaceFormat fmt;
@@ -71,7 +87,9 @@ void MapRenderer::msgUpdate() {
 
     bool localizer_valid = (location.getStatus() == cereal::LiveLocationKalman::Status::VALID) && pos.getValid();
     if (localizer_valid) {
+      float scale_lat80 = get_meters_per_pixel(80, 12);
       updatePosition(QMapbox::Coordinate(pos.getValue()[0], pos.getValue()[1]), RAD2DEG(orientation.getValue()[2]));
+      updateZoom(get_zoom_level_for_scale(pos.getValue()[0], scale_lat80));
     }
   }
 

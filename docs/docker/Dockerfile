@@ -8,12 +8,6 @@ ENV PYTHONPATH ${OPENPILOT_PATH}:${PYTHONPATH}
 RUN mkdir -p ${OPENPILOT_PATH}
 WORKDIR ${OPENPILOT_PATH}
 
-COPY Pipfile Pipfile.lock $OPENPILOT_PATH
-RUN pip install --no-cache-dir pipenv==2021.5.29 pip==21.3.1 && \
-    pipenv install --system --deploy --dev --clear && \
-    pip uninstall -y pipenv
-
-
 COPY SConstruct ${OPENPILOT_PATH}
 
 COPY ./pyextra ${OPENPILOT_PATH}/pyextra
@@ -33,7 +27,7 @@ COPY ./selfdrive ${OPENPILOT_PATH}/selfdrive
 COPY ./system ${OPENPILOT_PATH}/system
 COPY ./*.md ${OPENPILOT_PATH}/
 
-RUN scons -j$(nproc)
+RUN --mount=type=cache,target=/tmp/scons_cache scons -j$(nproc)
 
 RUN apt update && apt install doxygen -y
 COPY ./docs ${OPENPILOT_PATH}/docs

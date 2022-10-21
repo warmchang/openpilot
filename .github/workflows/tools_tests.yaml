@@ -80,6 +80,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: true
+    - uses: ./.github/workflows/setup
     - name: Build docker container
       run: |
         DOCKER_BUILDKIT=1 docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $DOCKER_REGISTRY/openpilot-docs:latest -t $DOCKER_REGISTRY/openpilot-docs:latest -f docs/docker/Dockerfile .

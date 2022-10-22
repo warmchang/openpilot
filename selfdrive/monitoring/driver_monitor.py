@@ -220,8 +220,10 @@ class DriverStatus():
 
   def set_policy(self, model_data, car_speed):
     bp = model_data.meta.disengagePredictions.brakeDisengageProbs[0] # brake disengage prob in next 2s
+    sp = model_data.meta.disengagePredictions.steerOverrideProbs[0]
     k1 = max(-0.00156*((car_speed-16)**2)+0.6, 0.2)
     k2 = max(-0.00125*((car_speed-18)**2)+0.5, 0.1)
+    k3 = max(-0.00075*((car_speed-18)**2)+0.9, 0.5)
     bp_normal = max(min(bp / k1, 0.5),0)
     self.pose.cfactor_pitch = interp(bp_normal, [0, 0.5],
                                            [self.settings._POSE_PITCH_THRESHOLD_SLACK,
@@ -230,7 +232,8 @@ class DriverStatus():
                                            [self.settings._POSE_YAW_THRESHOLD_SLACK,
                                             self.settings._POSE_YAW_THRESHOLD_STRICT]) / self.settings._POSE_YAW_THRESHOLD
     bp_normal2 = max(min(bp / k2, 1.0),0)
-    self.step_factor = self.settings._DISTRACTED_TIME / interp(bp_normal2, [0, 1],
+    bp_normal3 = max(min(sp / k3, 1.0),0)
+    self.step_factor = self.settings._DISTRACTED_TIME / interp(max(bp_normal2, bp_normal3), [0, 1],
                                    [self.settings._DISTRACTED_TIME, 2])
 
   def update_states(self, driver_state, cal_rpy, car_speed, op_engaged):

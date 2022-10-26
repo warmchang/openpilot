@@ -232,7 +232,7 @@ class DriverStatus():
                                            [self.settings._POSE_YAW_THRESHOLD_SLACK,
                                             self.settings._POSE_YAW_THRESHOLD_STRICT]) / self.settings._POSE_YAW_THRESHOLD
     bp_normal2 = max(min(bp / k2, 1.0),0)
-    bp_normal3 = max(min(sp / k3, 1.0),0)
+    bp_normal3 = max(min((sp - 0.05) / k3, 1.0),0)
     self.step_factor = self.settings._DISTRACTED_TIME / interp(max(bp_normal2, bp_normal3), [0, 1],
                                    [self.settings._DISTRACTED_TIME, 2])
 

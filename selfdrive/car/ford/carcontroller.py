@@ -1,4 +1,3 @@
-import math
 from cereal import car
 from common.numpy_fast import clip, interp
 from opendbc.can.packer import CANPacker
@@ -58,35 +57,21 @@ class CarController:
     # send steering commands at 20Hz
     if (self.frame % CarControllerParams.LKAS_STEER_STEP) == 0:
       if CC.latActive:
-        lca_rq = 1
+        lka_action = 4
         apply_angle = apply_ford_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS)
       else:
-        lca_rq = 0
+        lka_action = 0
         apply_angle = 0.
 
-      curvature = self.VM.calc_curvature(math.radians(apply_angle), CS.out.vEgo, 0.0)
+      apply_angle = clip(apply_angle, -102, 102)
 
-      # use LatCtlCurv_No_Actl to actuate steering
-      curvature = clip(curvature, -0.02, 0.02094)
+      self.apply_angle_last = apply_angle
 
-      self.apply_angle_last = math.degrees(self.VM.get_steer_from_curvature(curvature, CS.out.vEgo, 0.0))
+      ramp_type = 1  # 0=Smooth, 1=Quick
 
-      # set slower ramp type when small steering angle change
-      # 0=Slow, 1=Medium, 2=Fast, 3=Immediately
-      steer_change = abs(CS.out.steeringAngleDeg - actuators.steeringAngleDeg)
-      if steer_change < 2.0:
-        ramp_type = 0
-      elif steer_change < 4.0:
-        ramp_type = 1
-      elif steer_change < 6.0:
-        ramp_type = 2
-      else:
-        ramp_type = 3
-      precision = 1  # 0=Comfortable, 1=Precise (the stock system always uses comfortable)
-
-      can_sends.append(self.ford_can.create_lka_msg(0., 0.))
-      can_sends.append(self.ford_can.create_tja_msg(lca_rq, ramp_type, precision,
-                                                    0., 0., curvature, 0.))
+      can_sends.append(self.ford_can.create_lka_msg(lka_action, ramp_type, apply_angle, 0.))
+      can_sends.append(self.ford_can.create_tja_msg(0, 1, 0,
+                                                    0., 0., 0., 0.))
 
 
     ### ui ###

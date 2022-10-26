@@ -8,7 +8,7 @@ class FordCAN:
   def __init__(self, packer):
     self.packer = packer
 
-  def create_lka_msg(self, angle_deg: float, curvature: float):
+  def create_lka_msg(self, action: int, ramp_type: int, angle_deg: float, curvature: float):
     """
     Creates a CAN message for the Ford LKA Command.
 
@@ -19,9 +19,9 @@ class FordCAN:
 
     values = {
       "LkaDrvOvrrd_D_Rq": 0,              # driver override level? [0|3]
-      "LkaActvStats_D2_Req": 0,           # action [0|7]
+      "LkaActvStats_D2_Req": action,      # Action: 0=LkaNoInterv 1=LkaIncrIntervLeft 2=LkaStandIntervLeft 3=LkaSupprLeft 4=LkaStandIntervRight 5=LkaSupprRight 6=LkaIncrIntervRight [0|7]
       "LaRefAng_No_Req": angle_deg,       # angle [-102.4|102.3] degrees
-      "LaRampType_B_Req": 0,              # Ramp speed: 0=Smooth, 1=Quick
+      "LaRampType_B_Req": ramp_type,      # Ramp type: 0=Smooth, 1=Quick
       "LaCurvature_No_Calc": curvature,   # curvature [-0.01024|0.01023] 1/meter
       "LdwActvStats_D_Req": 0,            # LDW status [0|7]
       "LdwActvIntns_D_Req": 0,            # LDW intensity [0|3], shake alert strength

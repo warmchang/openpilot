@@ -180,10 +180,14 @@ def main() -> NoReturn:
   diag = ModemDiag()
 
   def cleanup(sig, frame):
-    cloudlog.warning(f"caught sig {sig}, disabling quectel gps")
-    teardown_quectel(diag)
-    cloudlog.warning("quectel cleanup done")
+    try:
+      cloudlog.warning(f"caught sig {sig}, disabling quectel gps")
+      teardown_quectel(diag)
+      cloudlog.warning("quectel cleanup done")
+    except Exception as e:
+      cloudlog.error(f"quectel cleanup crashed: {str(e)}")
     sys.exit(0)
+
   signal.signal(signal.SIGINT, cleanup)
   signal.signal(signal.SIGTERM, cleanup)
 

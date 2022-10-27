@@ -150,7 +150,7 @@ def teardown_quectel(diag):
   at_cmd("AT+QGPSCFG=\"outport\",\"none\"")
   if gps_enabled():
     at_cmd("AT+QGPSEND")
-  try_setup_logs(diag, [])
+  setup_logs(diag, [])
 
 
 def main() -> NoReturn:

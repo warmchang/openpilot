@@ -58,7 +58,7 @@ class CarController:
     # send steering commands at 20Hz
     if (self.frame % CarControllerParams.LKAS_STEER_STEP) == 0:
       if CC.latActive:
-        lka_action = 2
+        lka_action = 7 if CS.out.steerFaultTemporary else 2
         apply_angle = apply_ford_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS)
       else:
         lka_action = 0

@@ -38,7 +38,7 @@ class CarState(CarStateBase):
     ret.steeringAngleDeg = cp.vl["SteeringPinion_Data"]["StePinComp_An_Est"]
     ret.steeringTorque = cp.vl["EPAS_INFO"]["SteeringColumnTorque"]
     ret.steeringPressed = abs(ret.steeringTorque) > CarControllerParams.STEER_DRIVER_ALLOWANCE
-    ret.steerFaultTemporary = cp.vl["EPAS_INFO"]["EPAS_Failure"] == 1
+    ret.steerFaultTemporary = cp.vl["Lane_Assist_Data3_FD1"]["LaActAvail_D_Actl"] not in (2, 3)
     ret.steerFaultPermanent = cp.vl["EPAS_INFO"]["EPAS_Failure"] in (2, 3)
     # ret.espDisabled = False  # TODO: find traction control signal
 
@@ -111,6 +111,7 @@ class CarState(CarStateBase):
                                                              # to zero at the beginning of the drive.
       ("SteeringColumnTorque", "EPAS_INFO"),                 # PSCM steering column torque (Nm)
       ("EPAS_Failure", "EPAS_INFO"),                         # PSCM EPAS status
+      ("LaActAvail_D_Actl", "Lane_Assist_Data3_FD1"),        # PSCM lane assist status
       ("TurnLghtSwtch_D_Stat", "Steering_Data_FD1"),         # SCCM Turn signal switch
       ("TjaButtnOnOffPress", "Steering_Data_FD1"),           # SCCM ACC button, lane-centering/traffic jam assist toggle
       ("DrStatDrv_B_Actl", "BodyInfo_3_FD1"),                # BCM Door open, driver

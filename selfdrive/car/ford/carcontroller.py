@@ -1,3 +1,4 @@
+import math
 from cereal import car
 from common.numpy_fast import clip, interp
 from opendbc.can.packer import CANPacker
@@ -63,13 +64,14 @@ class CarController:
         lka_action = 0
         apply_angle = 0.
 
-      apply_angle = clip(apply_angle, -102, 102)
+      apply_angle = clip(apply_angle, -102.4, 102.3)
+      curvature = clip(self.VM.calc_curvature(math.radians(apply_angle), CS.out.vEgo, 0.0), -0.01024, 0.01023)
 
       self.apply_angle_last = apply_angle
 
       ramp_type = 1  # 0=Smooth, 1=Quick
 
-      can_sends.append(self.ford_can.create_lka_msg(lka_action, ramp_type, apply_angle, 0.))
+      can_sends.append(self.ford_can.create_lka_msg(lka_action, ramp_type, apply_angle, curvature))
       can_sends.append(self.ford_can.create_tja_msg(0, 1, 0,
                                                     0., 0., 0., 0.))
 

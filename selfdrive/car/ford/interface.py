@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.ford.values import CAR, CarParams, Ecu, TransmissionType, GearShifter
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -57,8 +58,8 @@ class CarInterface(CarInterfaceBase):
     # TODO: detect bsm in car_fw?
     ret.enableBsm = 0x3A6 in fingerprint[0] and 0x3A7 in fingerprint[0]
 
-    # LCA can steer down to zero
-    ret.minSteerSpeed = 0.
+    # LKA has a min steer speed
+    ret.minSteerSpeed = 13. * CV.MPH_TO_MS
 
     ret.autoResumeSng = ret.minEnableSpeed == -1.
     ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)

@@ -76,42 +76,12 @@ class FordCAN:
     Frequency is 1Hz.
     """
 
-    # LaActvStats_D_Dsply
-    #    R  Intvn Warn Supprs Avail No
-    # L
-    # Intvn  24    19    14     9   4
-    # Warn   23    18    13     8   3
-    # Supprs 22    17    12     7   2
-    # Avail  21    16    11     6   1
-    # No     20    15    10     5   0
-    #
-    # TODO: test suppress state
-    if enabled:
-      lines = 0  # NoLeft_NoRight
-      if hud_control.leftLaneDepart:
-        lines += 4
-      elif hud_control.leftLaneVisible:
-        lines += 1
-      if hud_control.rightLaneDepart:
-        lines += 20
-      elif hud_control.rightLaneVisible:
-        lines += 5
-    elif main_on:
-      lines = 0
-    else:
-      if hud_control.leftLaneDepart:
-        lines = 3  # WarnLeft_NoRight
-      elif hud_control.rightLaneDepart:
-        lines = 15  # NoLeft_WarnRight
-      else:
-        lines = 30  # LA_Off
-
     # TODO: use level 1 for no sound when less severe?
     hands_on_wheel_dsply = 2 if steer_alert else 0
 
     values = {
       **stock_values,
-      "LaActvStats_D_Dsply": lines,                 # LKAS status (lines) [0|31]
+      "LaActvStats_D_Dsply": 6,                 # LKAS status (lines) [0|31]
       "LaHandsOff_D_Dsply": hands_on_wheel_dsply,   # 0=HandsOn, 1=Level1 (w/o chime), 2=Level2 (w/ chime), 3=Suppressed
     }
     return self.packer.make_can_msg("IPMA_Data", CANBUS.main, values)
@@ -126,27 +96,9 @@ class FordCAN:
     Frequency is 20Hz.
     """
 
-    # Tja_D_Stat
-    if enabled:
-      if hud_control.leftLaneDepart:
-        status = 3  # ActiveInterventionLeft
-      elif hud_control.rightLaneDepart:
-        status = 4  # ActiveInterventionRight
-      else:
-        status = 2  # Active
-    elif main_on:
-      if hud_control.leftLaneDepart:
-        status = 5  # ActiveWarningLeft
-      elif hud_control.rightLaneDepart:
-        status = 6  # ActiveWarningRight
-      else:
-        status = 1  # Standby
-    else:
-      status = 0    # Off
-
     values = {
       **stock_values,
-      "Tja_D_Stat": status,
+      "Tja_D_Stat": 0,
     }
     return self.packer.make_can_msg("ACCDATA_3", CANBUS.main, values)
 
